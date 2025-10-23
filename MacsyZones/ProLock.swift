@@ -23,124 +23,35 @@ class VerifyResult {
 }
 
 class ProLock: ObservableObject {
-    @Published var isPro: Bool = false
-    @Published var owner: String?
-    
+    @Published var isPro: Bool = true
+    @Published var owner: String? = "AlwaysValid"
+
     private var licenseKey: String = ""
-    private let licenseFileName = "LicenseKey.txt"
-    
+
     init() {
-        load()
+        // No validation, always pro
     }
-    
+
     func load() {
-        let fileManager = FileManager.default
-        let appName = Bundle.main.bundleIdentifier ?? "MacsyZones"
-        let appSupportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDirectory = appSupportDirectory.appendingPathComponent(appName)
-        let filePath = appDirectory.appendingPathComponent(licenseFileName)
-        
-        if fileManager.fileExists(atPath: filePath.path) {
-            do {
-                licenseKey = try String(contentsOf: filePath, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
-                let verifyResult = validateLicenseKey(licenseKey)
-                if verifyResult.isValid {
-                    isPro = true
-                    owner = verifyResult.owner
-                } else {
-                    isPro = false
-                }
-            } catch {
-                debugLog("Error loading license key: \(error)")
-            }
-        } else {
-            debugLog("LicenseKey.txt file does not exist")
-        }
+        // No validation, always pro
     }
-    
+
     func save() {
-        let fileManager = FileManager.default
-        let appName = Bundle.main.bundleIdentifier ?? "MacsyZones"
-        let appSupportDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDirectory = appSupportDirectory.appendingPathComponent(appName)
-        
-        if !fileManager.fileExists(atPath: appDirectory.path) {
-            do {
-                try fileManager.createDirectory(at: appDirectory, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                debugLog("Error creating app directory: \(error)")
-                return
-            }
-        }
-        
-        let filePath = appDirectory.appendingPathComponent(licenseFileName)
-        
-        do {
-            try licenseKey.write(to: filePath, atomically: true, encoding: .utf8)
-            debugLog("License key saved")
-        } catch {
-            debugLog("Error saving license key: \(error)")
-        }
+        // No-op
     }
-    
+
     func setLicenseKey(_ key: String) -> Bool {
-        let verifyResult = validateLicenseKey(key)
-        
-        isPro = verifyResult.isValid
-        owner = verifyResult.owner
-        
-        if isPro {
-            licenseKey = key
-            save()
-            return true
-        } else {
-            isPro = false
-            return false
-        }
+        isPro = true
+        owner = "AlwaysValid"
+        licenseKey = key
+        return true
     }
-    
+
     private func validateLicenseKey(_ key: String) -> VerifyResult {
-        return verifyMergedLicenseKey(publicKey: PublicKeyProvider.PublicKey, mergedLicenseKey: key)
+        return VerifyResult(isValid: true, owner: "AlwaysValid")
     }
-    
+
     func verifyMergedLicenseKey(publicKey: SecKey, mergedLicenseKey: String) -> VerifyResult {
-        guard let decodedMergedKeyData = Data(base64Encoded: mergedLicenseKey) else {
-            return VerifyResult()
-        }
-        
-        guard let decodedMergedKey = String(data: decodedMergedKeyData, encoding: .utf8) else {
-            return VerifyResult()
-        }
-        
-        let components = decodedMergedKey.split(separator: "|")
-        guard components.count == 2 else {
-            return VerifyResult()
-        }
-        
-        let owner = components[0]
-        let signatureBase64 = components[1]
-        
-        guard let signatureData = Data(base64Encoded: String(signatureBase64)) else {
-            return VerifyResult()
-        }
-        
-        guard let ownerData = owner.data(using: .utf8) else {
-            return VerifyResult()
-        }
-        
-        var error: Unmanaged<CFError>?
-        let isValid = SecKeyVerifySignature(
-            publicKey,
-            .rsaSignatureMessagePSSSHA256,
-            ownerData as CFData,
-            signatureData as CFData,
-            &error
-        )
-
-        if error != nil || !isValid {
-            return VerifyResult()
-        }
-
-        return VerifyResult(isValid: true, owner: String(owner))
+        return VerifyResult(isValid: true, owner: "AlwaysValid")
     }
 }
