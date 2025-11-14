@@ -159,8 +159,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate, Sen
             }
         }
         .start()
-        
-        checkUpdateState()
     }
     
     func checkIfRunning() {
